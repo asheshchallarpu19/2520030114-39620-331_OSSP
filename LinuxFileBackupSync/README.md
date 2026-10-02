@@ -457,3 +457,190 @@ The project also includes:
 - Memory validation using Valgrind
 - System-call verification using `strace`
 
+
+---
+
+## Complete CO1-CO6 Practical Implementation
+
+### CO1 - Operating System as a Service Layer
+
+Implemented in:
+
+    src/co1_syscall_demo.c
+
+Demonstrates:
+
+- User-space program execution
+- Linux system-call interface
+- Direct `syscall()` usage
+- `SYS_getpid`
+- `SYS_write`
+- User-space to kernel-space service requests
+- System-call verification using `strace`
+
+Run:
+
+    ./co1_syscall_demo
+
+---
+
+### CO2 - Processes and Process Control
+
+Implemented in:
+
+    src/co2_process_demo.c
+    src/main.c
+
+Demonstrates:
+
+- `fork()`
+- Parent and child processes
+- `exec()` using `execl()`
+- `waitpid()`
+- `_exit()`
+- Process creation
+- Process replacement
+- Process synchronization
+- Child-process reaping
+
+Run:
+
+    ./co2_process_demo
+
+---
+
+### CO3 - Inter-Process Communication
+
+Implemented through:
+
+    src/main.c
+    src/fifo_demo.c
+    src/signal_demo.c
+    src/co3_ipc_demo.c
+
+Demonstrates:
+
+- Anonymous pipes
+- Named pipes / FIFO
+- Unix-domain sockets
+- Shared memory
+- Signals
+- `SIGUSR1`
+- Parent-child communication
+- IPC synchronization
+
+Run:
+
+    ./fifo_demo
+    ./signal_demo
+    ./co3_ipc_demo
+
+---
+
+### CO4 - Virtual Memory
+
+Implemented in:
+
+    src/memory_demo.c
+
+Demonstrates:
+
+- `mmap()`
+- Virtual memory allocation
+- System page size
+- Process address spaces
+- `fork()`
+- Copy-on-Write
+- Parent/child memory isolation
+- `munmap()`
+- Valgrind memory analysis
+
+Run:
+
+    ./memory_demo
+
+---
+
+### CO5 - File Systems and File I/O
+
+Implemented primarily by the main backup and synchronization system:
+
+    src/main.c
+    src/file_ops.c
+    src/metadata.c
+    src/sync.c
+
+Demonstrates:
+
+- File descriptors
+- `open()`
+- `read()`
+- `write()`
+- `close()`
+- `stat()`
+- `lstat()`
+- `fstat()`
+- `futimens()`
+- `mkdir()`
+- `opendir()`
+- `readdir()`
+- `closedir()`
+- Recursive directory traversal
+- File metadata comparison
+- New-file detection
+- Modified-file detection
+- Unchanged-file detection
+- Robust file copying
+- Automated backup testing
+
+Run:
+
+    ./backup_sync <source_directory> <backup_directory>
+
+---
+
+### CO6 - Concurrency and Synchronization
+
+Implemented in:
+
+    src/thread_demo.c
+    src/co6_sync_demo.c
+
+Demonstrates:
+
+- POSIX threads
+- `pthread_create()`
+- `pthread_join()`
+- Shared data
+- Race-condition prevention
+- Mutexes
+- Condition variables
+- Counting semaphores
+- Thread coordination
+- Limited concurrent worker execution
+
+Run:
+
+    ./thread_demo
+    ./co6_sync_demo
+
+---
+
+## Build All Components
+
+Run:
+
+    make clean && make
+
+The Makefile builds:
+
+    backup_sync
+    fifo_demo
+    signal_demo
+    memory_demo
+    thread_demo
+    co1_syscall_demo
+    co2_process_demo
+    co3_ipc_demo
+    co6_sync_demo
+

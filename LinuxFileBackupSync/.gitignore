@@ -11,3 +11,9 @@ signal_demo
 # CO4 and CO6 demonstration binaries
 memory_demo
 thread_demo
+
+# CO1, CO2, CO3 and advanced CO6 demo binaries
+co1_syscall_demo
+co2_process_demo
+co3_ipc_demo
+co6_sync_demo
