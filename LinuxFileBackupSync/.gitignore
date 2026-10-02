@@ -1,0 +1,9 @@
+
+# Compiled binaries
+backup_sync
+fifo_demo
+signal_demo
+
+# Object and temporary files
+*.o
+*.bak
