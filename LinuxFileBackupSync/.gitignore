@@ -7,3 +7,7 @@ signal_demo
 # Object and temporary files
 *.o
 *.bak
+
+# CO4 and CO6 demonstration binaries
+memory_demo
+thread_demo

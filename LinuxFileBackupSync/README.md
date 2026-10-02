@@ -373,3 +373,87 @@ Possible future enhancements include:
 ## Project Status
 
 The core Linux File Backup and Synchronization System is implemented and tested successfully.
+
+---
+
+## Course Outcome Mapping
+
+### CO4 - Virtual Memory and Process Address Space
+
+Implemented through `src/memory_demo.c`.
+
+The demonstration includes:
+
+- Virtual memory allocation using `mmap()`
+- System page-size detection using `sysconf(_SC_PAGESIZE)`
+- Process creation using `fork()`
+- Parent and child process address spaces
+- Copy-on-Write behavior
+- Memory modification after `fork()`
+- Memory cleanup using `munmap()`
+
+Run:
+
+    ./memory_demo
+
+The child changes the mapped value from 100 to 200, while the parent still sees 100, demonstrating Copy-on-Write behavior.
+
+### CO5 - File Systems and Linux File I/O
+
+Implemented mainly through the backup and synchronization system.
+
+The project uses:
+
+- File descriptors
+- `open()`
+- `read()`
+- `write()`
+- `close()`
+- `stat()`
+- `lstat()`
+- `fstat()`
+- `futimens()`
+- `mkdir()`
+- `opendir()`
+- `readdir()`
+- `closedir()`
+- Recursive directory traversal
+- File metadata comparison
+- File and directory synchronization
+
+Run:
+
+    ./backup_sync <source_directory> <backup_directory>
+
+### CO6 - Concurrency and Synchronization
+
+Implemented through `src/thread_demo.c`.
+
+The demonstration includes:
+
+- POSIX threads using `pthread_create()`
+- Thread completion using `pthread_join()`
+- Shared data between threads
+- Race-condition prevention
+- Mutex locking using `pthread_mutex_lock()`
+- Mutex unlocking using `pthread_mutex_unlock()`
+- Mutex initialization and destruction
+- Multiple worker threads updating shared statistics safely
+
+Run:
+
+    ./thread_demo
+
+Four threads each process five simulated files. The shared counter is protected by a mutex and finishes with the expected total of 20.
+
+### Additional Operating-System Demonstrations
+
+The project also includes:
+
+- Anonymous pipe IPC using `pipe()`
+- Named pipe IPC using `mkfifo()`
+- Signal handling using `SIGUSR1`
+- Process synchronization using `waitpid()`
+- Memory validation using Valgrind
+- System-call verification using `strace`
+
