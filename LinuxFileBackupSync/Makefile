@@ -3,7 +3,7 @@ CFLAGS = -Wall -Wextra -g
 
 TARGET = backup_sync
 
-SRC = src/main.c src/file_ops.c
+SRC = src/main.c src/file_ops.c src/metadata.c src/sync.c
 
 all: $(TARGET)
 

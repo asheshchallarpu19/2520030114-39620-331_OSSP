@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
+#include <sys/stat.h>
+#include <time.h>
 
 #include "file_ops.h"
 
@@ -12,7 +15,7 @@ int copy_file(const char *source, const char *destination)
     int destination_fd;
     char buffer[BUFFER_SIZE];
     ssize_t bytes_read;
-    ssize_t bytes_written;
+    struct stat source_stat;
 
     source_fd = open(source, O_RDONLY);
 
@@ -22,10 +25,17 @@ int copy_file(const char *source, const char *destination)
         return -1;
     }
 
+    if (fstat(source_fd, &source_stat) == -1)
+    {
+        perror("Error reading source metadata");
+        close(source_fd);
+        return -1;
+    }
+
     destination_fd = open(
         destination,
         O_WRONLY | O_CREAT | O_TRUNC,
-        0644
+        source_stat.st_mode & 0777
     );
 
     if (destination_fd == -1)
@@ -37,20 +47,30 @@ int copy_file(const char *source, const char *destination)
 
     while ((bytes_read = read(source_fd, buffer, BUFFER_SIZE)) > 0)
     {
-        bytes_written = write(
-            destination_fd,
-            buffer,
-            bytes_read
-        );
+        ssize_t total_written = 0;
 
-        if (bytes_written != bytes_read)
+        while (total_written < bytes_read)
         {
-            perror("Error writing to destination file");
+            ssize_t bytes_written = write(
+                destination_fd,
+                buffer + total_written,
+                bytes_read - total_written
+            );
 
-            close(source_fd);
-            close(destination_fd);
+            if (bytes_written == -1)
+            {
+                if (errno == EINTR)
+                    continue;
 
-            return -1;
+                perror("Error writing to destination file");
+
+                close(source_fd);
+                close(destination_fd);
+
+                return -1;
+            }
+
+            total_written += bytes_written;
         }
     }
 
@@ -62,6 +82,17 @@ int copy_file(const char *source, const char *destination)
         close(destination_fd);
 
         return -1;
+    }
+
+    /* Preserve source modification time */
+    struct timespec times[2];
+
+    times[0] = source_stat.st_atim;
+    times[1] = source_stat.st_mtim;
+
+    if (futimens(destination_fd, times) == -1)
+    {
+        perror("Warning: could not preserve file timestamps");
     }
 
     close(source_fd);
