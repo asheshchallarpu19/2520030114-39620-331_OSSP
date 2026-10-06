@@ -31,7 +31,8 @@ FileState compare_file_metadata(
 
     if (
         source_stat.st_size != destination_stat.st_size ||
-        source_stat.st_mtime != destination_stat.st_mtime
+        source_stat.st_mtim.tv_sec != destination_stat.st_mtim.tv_sec ||
+        source_stat.st_mtim.tv_nsec != destination_stat.st_mtim.tv_nsec
     )
     {
         return FILE_STATE_MODIFIED;

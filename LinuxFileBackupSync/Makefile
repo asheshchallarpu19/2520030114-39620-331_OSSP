@@ -3,7 +3,7 @@ CFLAGS = -Wall -Wextra -g
 THREAD_FLAGS = -pthread
 
 BACKUP_TARGET = backup_sync
-BACKUP_SRC = src/main.c src/file_ops.c src/metadata.c src/sync.c
+BACKUP_SRC = src/main.c src/file_ops.c src/metadata.c src/sync.c src/worker_pool.c
 
 FIFO_TARGET = fifo_demo
 FIFO_SRC = src/fifo_demo.c
@@ -41,7 +41,7 @@ all: \
 	$(CO6_TARGET)
 
 $(BACKUP_TARGET): $(BACKUP_SRC)
-	$(CC) $(CFLAGS) $(BACKUP_SRC) -o $(BACKUP_TARGET)
+	$(CC) $(CFLAGS) $(THREAD_FLAGS) $(BACKUP_SRC) -o $(BACKUP_TARGET)
 
 $(FIFO_TARGET): $(FIFO_SRC)
 	$(CC) $(CFLAGS) $(FIFO_SRC) -o $(FIFO_TARGET)

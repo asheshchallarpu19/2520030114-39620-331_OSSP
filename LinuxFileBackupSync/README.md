@@ -1,12 +1,21 @@
+Yes — here is the **entire final README in one giant block** so you can copy everything at once into Nano.
+
+```markdown
 # Linux File Backup and Synchronization System
 
 ## Overview
 
-This project is a Linux-based file backup and synchronization system developed in C.
+The **Linux File Backup and Synchronization System** is a C-based Operating Systems and System Programming project developed for Linux / Ubuntu / WSL.
 
-The program recursively scans a source directory and synchronizes files into a backup directory. It detects new, modified, and unchanged files using file metadata and performs only the required backup operations.
+The application performs one-way synchronization:
 
-The project also demonstrates important Operating Systems and System Programming concepts including process creation, inter-process communication, named pipes, signals, directory traversal, and Linux file system calls.
+```text
+Source Directory -> Backup Directory
+```
+
+It recursively scans a source directory, detects new and modified files, skips unchanged files, and synchronizes data into a backup directory.
+
+The final implementation includes real POSIX multithreading, safe atomic file copying, exclusive backup locking, optional mirror deletion, parent-child process control, IPC, runtime statistics, automated testing, memory analysis, concurrency analysis, and system-call verification.
 
 ---
 
@@ -16,461 +25,556 @@ The project also demonstrates important Operating Systems and System Programming
 - Backup of new files
 - Update of modified files
 - Skip unchanged files
-- Automatic creation of missing backup directories
-- File metadata comparison using `stat()`
-- Low-level file copying using `open()`, `read()`, `write()`, and `close()`
+- Automatic creation of directories
+- Nanosecond-resolution modification-time comparison
+- Real multithreaded file-copy worker pool
+- Configurable worker count using `--threads N`
+- Safe temporary-file copying
+- `fsync()` before replacement
+- Atomic `rename()`
+- File permission preservation
 - File timestamp preservation
-- Command-line source and backup directories
-- Parent-child process creation using `fork()`
-- Anonymous pipe communication
-- Named pipe (FIFO) demonstration
-- Signal handling using `SIGUSR1`
-- Synchronization statistics
-- Error handling
-- Automated testing
+- Partial-write handling
+- Interrupted system-call handling
+- Exclusive backup locking using `flock()`
+- Optional mirror deletion using `--delete`
+- Recursive stale-directory deletion
+- File-to-directory type-change handling
+- Directory-to-file type-change handling
+- Canonical path checking using `realpath()`
+- Protection against unsafe nested source/backup paths
+- Parent-child process architecture
+- Anonymous pipe IPC
+- Runtime statistics
+- Recoverable error handling
+- Automated regression testing
 - Valgrind memory testing
+- Helgrind concurrency testing
 - `strace` system-call verification
+- CO1-CO6 practical demonstrations
 
 ---
 
 ## Project Structure
 
-    LinuxFileBackupSync/
-    |
-    +-- src/
-    |   +-- main.c
-    |   +-- file_ops.c
-    |   +-- file_ops.h
-    |   +-- metadata.c
-    |   +-- metadata.h
-    |   +-- sync.c
-    |   +-- sync.h
-    |   +-- fifo_demo.c
-    |   +-- signal_demo.c
-    |
-    +-- tests/
-    |   +-- test_backup.sh
-    |
-    +-- Makefile
-    +-- .gitignore
-    +-- README.md
-
----
-
-## Core Modules
-
-### main.c
-
-Responsible for:
-
-- Command-line argument validation
-- Source directory validation
-- Creating a child process using `fork()`
-- Creating an anonymous pipe
-- Starting synchronization
-- Receiving synchronization status from the child
-- Waiting for child completion using `waitpid()`
-
-### sync.c
-
-Responsible for:
-
-- Recursive directory scanning
-- Creating backup directories
-- Processing regular files
-- Calling metadata comparison functions
-- Copying new and modified files
-- Skipping unchanged files
-- Maintaining synchronization statistics
-
-### metadata.c
-
-Compares the source file and backup file using:
-
-- File size
-- Modification time
-
-Possible file states are:
-
-- `FILE_STATE_NEW`
-- `FILE_STATE_MODIFIED`
-- `FILE_STATE_UNCHANGED`
-- `FILE_STATE_ERROR`
-
-### file_ops.c
-
-Handles file copying using Linux file operations:
-
-- `open()`
-- `read()`
-- `write()`
-- `close()`
-- `fstat()`
-- `futimens()`
-
-The implementation also handles partial writes and interrupted system calls.
-
----
-
-## System Calls and OS Concepts Used
-
-The project demonstrates the use of:
-
-- `fork()`
-- `pipe()`
-- `waitpid()`
-- `open()`
-- `read()`
-- `write()`
-- `close()`
-- `stat()`
-- `lstat()`
-- `fstat()`
-- `mkdir()`
-- `opendir()`
-- `readdir()`
-- `closedir()`
-- `mkfifo()`
-- `unlink()`
-- `kill()`
-- Signal handling
+```text
+LinuxFileBackupSync/
+|
++-- src/
+|   +-- main.c
+|   +-- file_ops.c
+|   +-- file_ops.h
+|   +-- metadata.c
+|   +-- metadata.h
+|   +-- sync.c
+|   +-- sync.h
+|   +-- worker_pool.c
+|   +-- worker_pool.h
+|   +-- fifo_demo.c
+|   +-- signal_demo.c
+|   +-- memory_demo.c
+|   +-- thread_demo.c
+|   +-- co1_syscall_demo.c
+|   +-- co2_process_demo.c
+|   +-- co3_ipc_demo.c
+|   +-- co6_sync_demo.c
+|
++-- tests/
+|   +-- test_backup.sh
+|
++-- Makefile
++-- .gitignore
++-- README.md
+```
 
 ---
 
 ## Build Instructions
 
-The project is designed for Linux or Ubuntu under WSL.
+Build all components:
 
-Compile all programs using:
+```bash
+make clean && make
+```
 
-    make
+Build only the main backup application:
 
-This builds:
+```bash
+make backup_sync
+```
 
-    backup_sync
-    fifo_demo
-    signal_demo
+Remove compiled binaries:
 
-Remove compiled binaries using:
+```bash
+make clean
+```
 
-    make clean
+The main backup program is compiled with POSIX pthread support.
 
 ---
 
 ## Running the Backup Program
 
-Syntax:
+### Basic Backup
 
-    ./backup_sync <source_directory> <backup_directory>
-
-Example:
-
-    ./backup_sync /tmp/source /tmp/backup
-
-The program displays operations such as:
-
-    [COPY] file.txt (NEW)
-    [UPDATE] report.txt (MODIFIED)
-    [SKIP] notes.txt (UNCHANGED)
-
-After synchronization, a summary is displayed showing:
-
-- Files scanned
-- New files copied
-- Files updated
-- Unchanged files skipped
-- Directories created
-- Errors
-
----
-
-## Named Pipe FIFO Demonstration
-
-Run:
-
-    ./fifo_demo
-
-The program creates the FIFO at:
-
-    /tmp/ossp_backup_fifo
-
-The child process sends:
-
-    BACKUP_COMPLETED
-
-to the parent process through the named pipe.
-
-`/tmp` is used because Unix FIFOs may not be supported inside Windows-mounted WSL paths such as `/mnt/c`.
-
----
-
-## Signal Handling Demonstration
-
-Run:
-
-    ./signal_demo
-
-The parent process sends `SIGUSR1` to the child process.
-
-The child waits for the signal and executes its registered signal handler after receiving it.
-
----
-
-## Automated Testing
-
-Run:
-
-    ./tests/test_backup.sh
-
-The automated test suite verifies:
-
-1. Initial file backup
-2. Recursive directory copying
-3. Detection of unchanged files
-4. Detection and update of modified files
-5. Deep recursive directory synchronization
-6. Invalid source directory rejection
-
-Successful execution ends with:
-
-    ALL AUTOMATED TESTS PASSED
-
----
-
-## Memory Testing
-
-The project was tested using Valgrind:
-
-    valgrind --leak-check=full --show-leak-kinds=all \
-    ./backup_sync /tmp/source /tmp/backup
-
-Testing produced:
-
-    All heap blocks were freed -- no leaks are possible
-    ERROR SUMMARY: 0 errors
-
----
-
-## System Call Verification
-
-Linux system calls were verified using `strace`.
+```bash
+./backup_sync <source_directory> <backup_directory>
+```
 
 Example:
 
-    strace -f -yy \
-    -e trace=openat,read,write,close,newfstatat,mkdir \
-    ./backup_sync /tmp/source /tmp/backup
+```bash
+./backup_sync /tmp/source /tmp/backup
+```
 
-The trace confirms actual Linux system calls for:
+The default worker count is:
 
-- File metadata access
-- File opening
-- Reading
-- Writing
-- Closing
-- Directory access
-- Pipe communication
+```text
+4 threads
+```
 
 ---
 
-## Synchronization Workflow
+### Custom Worker Count
 
-    Source Directory
-           |
-           v
-    Recursive Directory Scan
-           |
-           v
-    Read File Metadata
-           |
-           v
-    Compare Source and Backup
-           |
-        +--+--+
-        |     |
-       NEW  MODIFIED
-        |     |
-       COPY  UPDATE
-        |
-    UNCHANGED
-        |
-       SKIP
-           |
-           v
-    Synchronization Summary
-           |
-           v
-    Status sent to Parent through Pipe
+```bash
+./backup_sync /tmp/source /tmp/backup --threads 8
+```
+
+Supported worker range:
+
+```text
+1 to 16 threads
+```
 
 ---
 
-## Current Synchronization Behavior
+### Mirror / Delete Mode
 
-The program currently performs one-way synchronization:
+Deletion is disabled by default.
 
-    Source Directory -> Backup Directory
+Normal mode:
 
-New source files are copied.
+```bash
+./backup_sync /tmp/source /tmp/backup
+```
 
-Modified source files are updated.
+retains files in the backup even if they have been deleted from the source.
 
-Unchanged files are skipped.
+Mirror mode:
 
-Files deleted from the source directory are currently retained in the backup directory.
+```bash
+./backup_sync /tmp/source /tmp/backup --delete
+```
 
-Symbolic links and unsupported special file types are skipped.
-
----
-
-## Testing Completed
-
-The project has successfully completed:
-
-- Compilation with GCC
-- Recursive backup testing
-- New file detection testing
-- Modified file detection testing
-- Unchanged file testing
-- Deep directory testing
-- Invalid source testing
-- FIFO IPC testing
-- Signal handling testing
-- Valgrind memory testing
-- `strace` system-call verification
-- Automated test suite
+removes backup entries that no longer exist in the source.
 
 ---
 
-## Future Enhancements
+### Threads and Delete Mode Together
 
-Possible future enhancements include:
+```bash
+./backup_sync /tmp/source /tmp/backup --threads 8 --delete
+```
 
-- POSIX thread-based parallel synchronization
-- Mutex-protected shared statistics
-- Bidirectional synchronization
-- File deletion synchronization
-- Backup versioning
-- Checksum-based change detection
-- Scheduled automatic backups
-- Log files
-- Configuration file support
-- Graphical user interface
+or:
+
+```bash
+./backup_sync /tmp/source /tmp/backup --delete --threads 8
+```
 
 ---
 
-## Development Environment
+## Synchronization Operations
 
-- Programming Language: C
-- Operating System: Linux / Ubuntu / WSL
-- Compiler: GCC
-- Build Tool: Make
-- Memory Testing: Valgrind
-- System Call Analysis: strace
-- Automated Testing: Bash
+Example output:
+
+```text
+[COPY] source/new.txt (NEW)
+
+[UPDATE] source/report.txt (MODIFIED)
+
+[SKIP] source/notes.txt (UNCHANGED)
+
+[DELETE] backup/old.txt
+
+[DELETE-DIR] backup/old_directory
+```
 
 ---
 
-## Project Status
+## Metadata Comparison
 
-The core Linux File Backup and Synchronization System is implemented and tested successfully.
+The system compares source and backup files using:
+
+- File size
+- Modification-time seconds
+- Modification-time nanoseconds
+
+The implementation uses:
+
+```c
+st_mtim.tv_sec
+st_mtim.tv_nsec
+```
+
+This allows rapid changes occurring within the same second to be detected.
+
+Possible file states are:
+
+```text
+FILE_STATE_NEW
+FILE_STATE_MODIFIED
+FILE_STATE_UNCHANGED
+FILE_STATE_ERROR
+```
 
 ---
 
-## Course Outcome Mapping
+## Multithreaded Worker Pool
 
-### CO4 - Virtual Memory and Process Address Space
+The actual backup engine uses POSIX threads.
 
-Implemented through `src/memory_demo.c`.
+The worker-pool implementation uses:
 
-The demonstration includes:
+- `pthread_create()`
+- `pthread_join()`
+- Mutexes
+- Condition variables
+- Shared job queue
+- Multiple concurrent copy workers
+- Thread-safe statistics updates
 
-- Virtual memory allocation using `mmap()`
-- System page-size detection using `sysconf(_SC_PAGESIZE)`
-- Process creation using `fork()`
-- Parent and child process address spaces
-- Copy-on-Write behavior
-- Memory modification after `fork()`
-- Memory cleanup using `munmap()`
+New and modified files are placed into the worker queue and processed concurrently.
+
+The number of workers can be configured using:
+
+```bash
+--threads N
+```
+
+where `N` must be between 1 and 16.
+
+---
+
+## Safe Atomic File Copying
+
+New and modified files are first copied to a temporary file.
+
+Workflow:
+
+```text
+Source file
+    |
+    v
+Temporary backup file
+    |
+    v
+read() / write()
+    |
+    v
+Preserve permissions and timestamps
+    |
+    v
+fsync()
+    |
+    v
+rename()
+    |
+    v
+Final backup file
+```
+
+Temporary files use names similar to:
+
+```text
+filename.tmp.XXXXXX
+```
+
+If copying fails, the temporary file is removed.
+
+This prevents a partially written file from replacing a valid backup.
+
+---
+
+## Exclusive Backup Locking
+
+Each backup directory uses:
+
+```text
+.backup_sync.lock
+```
+
+The application obtains a non-blocking exclusive lock using:
+
+```c
+flock(lock_fd, LOCK_EX | LOCK_NB)
+```
+
+If another cooperating backup process already holds the lock, the new process is rejected.
+
+Example:
+
+```text
+[ERROR] Another backup process is already using:
+        /tmp/backup
+```
+
+---
+
+## Safe Delete Mode
+
+Deletion occurs only when:
+
+```bash
+--delete
+```
+
+is explicitly supplied.
+
+The deletion system supports:
+
+- Stale regular files
+- Stale directory trees
+- Directory to file changes
+- File to directory changes
+
+The internal file:
+
+```text
+.backup_sync.lock
+```
+
+is excluded from deletion.
+
+---
+
+## Path Safety
+
+Before synchronization begins, paths are resolved using:
+
+```c
+realpath()
+```
+
+The application rejects:
+
+- Source and backup being the same directory
+- Backup being inside source
+- Source being inside backup
+- Unsafe paths using `..`
+- Unsafe symbolic-link path aliases
+
+This prevents recursive self-backup and dangerous deletion behavior.
+
+---
+
+## Parent-Child Process Architecture
+
+The parent process:
+
+1. Validates command-line arguments
+2. Validates source directory
+3. Creates the backup root if necessary
+4. Validates source and backup path relationships
+5. Acquires the backup lock
+6. Creates an anonymous pipe
+7. Calls `fork()`
+8. Waits for the child using `waitpid()`
+9. Reads the final synchronization status
+
+The child process:
+
+1. Creates the worker pool
+2. Performs optional mirror deletion
+3. Recursively scans the source
+4. Submits copy jobs
+5. Waits for workers to finish
+6. Prints synchronization statistics
+7. Sends final status through the pipe
+
+Possible IPC messages:
+
+```text
+SYNC_SUCCESS
+SYNC_COMPLETED_WITH_ERRORS
+```
+
+---
+
+## Runtime Statistics
+
+The program displays:
+
+```text
+Files scanned
+New files copied
+Files updated
+Unchanged skipped
+Directories created
+Files deleted
+Directories deleted
+Bytes copied
+Worker threads
+Elapsed time
+Errors
+```
+
+Example:
+
+```text
+========================================
+ Synchronization Summary
+========================================
+Files scanned       : 20
+New files copied    : 4
+Files updated       : 2
+Unchanged skipped   : 14
+Directories created : 1
+Files deleted       : 0
+Directories deleted : 0
+Bytes copied        : 4096
+Worker threads      : 4
+Elapsed time        : 0.012 seconds
+Errors              : 0
+========================================
+```
+
+---
+
+## Error Handling
+
+Recoverable errors do not immediately stop the entire backup.
+
+For example, if one source file cannot be opened:
+
+```text
+Error opening source file: Permission denied
+[ERROR] Failed to copy new file: ...
+```
+
+other accessible files can still be copied.
+
+The final result still correctly reports:
+
+```text
+Errors              : 1
+Parent received: SYNC_COMPLETED_WITH_ERRORS
+Child exit status: 1
+```
+
+---
+
+## Automated Regression Testing
 
 Run:
 
-    ./memory_demo
+```bash
+./tests/test_backup.sh
+```
 
-The child changes the mapped value from 100 to 200, while the parent still sees 100, demonstrating Copy-on-Write behavior.
+The final regression suite contains **14 major test groups**:
 
-### CO5 - File Systems and Linux File I/O
+1. Initial recursive backup
+2. Unchanged-file detection
+3. Nanosecond modification detection
+4. Deep recursive synchronization
+5. Worker-thread and byte statistics
+6. Invalid thread-count rejection
+7. Safe optional `--delete` behavior
+8. Stale directory-tree deletion
+9. File/directory type changes
+10. Dangerous source/backup path protection
+11. Exclusive backup locking
+12. Threaded recoverable error handling
+13. Atomic temporary-file cleanup
+14. Invalid source rejection
 
-Implemented mainly through the backup and synchronization system.
+Final verified result:
 
-The project uses:
-
-- File descriptors
-- `open()`
-- `read()`
-- `write()`
-- `close()`
-- `stat()`
-- `lstat()`
-- `fstat()`
-- `futimens()`
-- `mkdir()`
-- `opendir()`
-- `readdir()`
-- `closedir()`
-- Recursive directory traversal
-- File metadata comparison
-- File and directory synchronization
-
-Run:
-
-    ./backup_sync <source_directory> <backup_directory>
-
-### CO6 - Concurrency and Synchronization
-
-Implemented through `src/thread_demo.c`.
-
-The demonstration includes:
-
-- POSIX threads using `pthread_create()`
-- Thread completion using `pthread_join()`
-- Shared data between threads
-- Race-condition prevention
-- Mutex locking using `pthread_mutex_lock()`
-- Mutex unlocking using `pthread_mutex_unlock()`
-- Mutex initialization and destruction
-- Multiple worker threads updating shared statistics safely
-
-Run:
-
-    ./thread_demo
-
-Four threads each process five simulated files. The shared counter is protected by a mutex and finishes with the expected total of 20.
-
-### Additional Operating-System Demonstrations
-
-The project also includes:
-
-- Anonymous pipe IPC using `pipe()`
-- Named pipe IPC using `mkfifo()`
-- Signal handling using `SIGUSR1`
-- Process synchronization using `waitpid()`
-- Memory validation using Valgrind
-- System-call verification using `strace`
-
+```text
+========================================
+ ALL FINAL REGRESSION TESTS PASSED
+========================================
+```
 
 ---
 
-## Complete CO1-CO6 Practical Implementation
+## Valgrind Memory Verification
 
-### CO1 - Operating System as a Service Layer
+The final threaded backup engine was tested using Valgrind Memcheck.
 
-Implemented in:
+Result for both the parent and child processes:
 
-    src/co1_syscall_demo.c
+```text
+All heap blocks were freed -- no leaks are possible
+ERROR SUMMARY: 0 errors
+```
+
+Valgrind exit status:
+
+```text
+0
+```
+
+---
+
+## Helgrind Concurrency Verification
+
+The worker pool was tested using Valgrind Helgrind with four worker threads and twenty real copy jobs.
+
+Result:
+
+```text
+ERROR SUMMARY: 0 errors from 0 contexts
+```
+
+Helgrind exit status:
+
+```text
+0
+```
+
+No tested data races or synchronization errors were detected.
+
+---
+
+## strace System-Call Verification
+
+The final program was verified using Linux `strace`.
+
+Observed operations included:
+
+```text
+flock(...)
+pipe2(...)
+clone(... SIGCHLD ...)
+clone3(... CLONE_THREAD ...)
+mkdir(...)
+utimensat(...)
+fsync(...)
+rename(...)
+write(... "SYNC_SUCCESS" ...)
+wait4(...)
+read(... "SYNC_SUCCESS" ...)
+```
+
+This confirms that the project uses real Linux kernel services.
+
+---
+
+# Course Outcome Mapping
+
+## CO1 - Operating System as a Service Layer
+
+Implemented primarily in:
+
+```text
+src/co1_syscall_demo.c
+```
 
 Demonstrates:
 
-- User-space program execution
 - Linux system-call interface
 - Direct `syscall()` usage
 - `SYS_getpid`
@@ -480,43 +584,50 @@ Demonstrates:
 
 Run:
 
-    ./co1_syscall_demo
+```bash
+./co1_syscall_demo
+```
 
 ---
 
-### CO2 - Processes and Process Control
+## CO2 - Unix Process Control
 
 Implemented in:
 
-    src/co2_process_demo.c
-    src/main.c
+```text
+src/co2_process_demo.c
+src/main.c
+```
 
 Demonstrates:
 
 - `fork()`
-- Parent and child processes
 - `exec()` using `execl()`
 - `waitpid()`
 - `_exit()`
-- Process creation
+- Parent-child process creation
 - Process replacement
 - Process synchronization
 - Child-process reaping
 
 Run:
 
-    ./co2_process_demo
+```bash
+./co2_process_demo
+```
 
 ---
 
-### CO3 - Inter-Process Communication
+## CO3 - Inter-Process Communication
 
 Implemented through:
 
-    src/main.c
-    src/fifo_demo.c
-    src/signal_demo.c
-    src/co3_ipc_demo.c
+```text
+src/main.c
+src/fifo_demo.c
+src/signal_demo.c
+src/co3_ipc_demo.c
+```
 
 Demonstrates:
 
@@ -527,48 +638,54 @@ Demonstrates:
 - Signals
 - `SIGUSR1`
 - Parent-child communication
-- IPC synchronization
 
 Run:
 
-    ./fifo_demo
-    ./signal_demo
-    ./co3_ipc_demo
+```bash
+./fifo_demo
+./signal_demo
+./co3_ipc_demo
+```
 
 ---
 
-### CO4 - Virtual Memory
+## CO4 - Virtual Memory
 
 Implemented in:
 
-    src/memory_demo.c
+```text
+src/memory_demo.c
+```
 
 Demonstrates:
 
 - `mmap()`
 - Virtual memory allocation
-- System page size
-- Process address spaces
+- System page-size detection
 - `fork()`
 - Copy-on-Write
 - Parent/child memory isolation
 - `munmap()`
-- Valgrind memory analysis
 
 Run:
 
-    ./memory_demo
+```bash
+./memory_demo
+```
 
 ---
 
-### CO5 - File Systems and File I/O
+## CO5 - File Systems and File I/O
 
-Implemented primarily by the main backup and synchronization system:
+Implemented primarily through:
 
-    src/main.c
-    src/file_ops.c
-    src/metadata.c
-    src/sync.c
+```text
+src/main.c
+src/file_ops.c
+src/metadata.c
+src/sync.c
+src/worker_pool.c
+```
 
 Demonstrates:
 
@@ -581,66 +698,168 @@ Demonstrates:
 - `lstat()`
 - `fstat()`
 - `futimens()`
+- `fsync()`
+- `rename()`
+- `unlink()`
 - `mkdir()`
+- `rmdir()`
 - `opendir()`
 - `readdir()`
 - `closedir()`
 - Recursive directory traversal
-- File metadata comparison
-- New-file detection
-- Modified-file detection
-- Unchanged-file detection
-- Robust file copying
-- Automated backup testing
+- Metadata comparison
+- Atomic file replacement
+- Optional deletion synchronization
 
 Run:
 
-    ./backup_sync <source_directory> <backup_directory>
+```bash
+./backup_sync <source_directory> <backup_directory>
+```
 
 ---
 
-### CO6 - Concurrency and Synchronization
+## CO6 - Concurrency and Synchronization
 
 Implemented in:
 
-    src/thread_demo.c
-    src/co6_sync_demo.c
+```text
+src/worker_pool.c
+src/thread_demo.c
+src/co6_sync_demo.c
+```
 
 Demonstrates:
 
 - POSIX threads
+- Real concurrent file copying
 - `pthread_create()`
 - `pthread_join()`
-- Shared data
-- Race-condition prevention
 - Mutexes
 - Condition variables
-- Counting semaphores
-- Thread coordination
-- Limited concurrent worker execution
+- Shared worker queue
+- Thread-safe shared statistics
+- Race-condition prevention
+- Counting semaphores in the dedicated CO6 demonstration
 
 Run:
 
-    ./thread_demo
-    ./co6_sync_demo
+```bash
+./backup_sync /tmp/source /tmp/backup --threads 4
+./thread_demo
+./co6_sync_demo
+```
 
 ---
 
-## Build All Components
+## Additional Demonstrations
+
+### FIFO
 
 Run:
 
-    make clean && make
+```bash
+./fifo_demo
+```
 
-The Makefile builds:
+The FIFO is created at:
 
-    backup_sync
-    fifo_demo
-    signal_demo
-    memory_demo
-    thread_demo
-    co1_syscall_demo
-    co2_process_demo
-    co3_ipc_demo
-    co6_sync_demo
+```text
+/tmp/ossp_backup_fifo
+```
 
+`/tmp` is used because Unix FIFOs may not work correctly on Windows-mounted WSL directories such as `/mnt/c`.
+
+### Signal Handling
+
+Run:
+
+```bash
+./signal_demo
+```
+
+The parent sends `SIGUSR1` to the child.
+
+### Advanced IPC
+
+Run:
+
+```bash
+./co3_ipc_demo
+```
+
+Demonstrates Unix-domain sockets and shared anonymous memory.
+
+---
+
+## Current Limitations
+
+- Synchronization is one-way from source to backup.
+- Source symbolic-link entries are skipped rather than copied as symbolic links.
+- Unsupported special file types are skipped.
+- `flock()` is advisory and protects cooperating processes.
+- Change detection is based on size and timestamps rather than content checksums.
+- A source file modified while actively being copied is not a point-in-time filesystem snapshot.
+- Atomic replacement calls `fsync()` on the temporary file before `rename()`, but does not additionally `fsync()` the containing directory.
+- The worker-job queue is dynamically allocated and currently unbounded.
+
+---
+
+## Possible Future Enhancements
+
+- Optional checksum verification
+- SHA-256 integrity verification
+- Persistent log files
+- Symbolic-link backup support
+- Backup version history
+- Scheduled backups
+- Bounded worker queue
+- Filesystem snapshot support
+- Configuration-file support
+- Graphical user interface
+
+---
+
+## Development Environment
+
+- Programming Language: C
+- Platform: Linux / Ubuntu / WSL
+- Compiler: GCC
+- Build Tool: Make
+- Threading: POSIX pthreads
+- Automated Testing: Bash
+- Memory Analysis: Valgrind Memcheck
+- Concurrency Analysis: Valgrind Helgrind
+- System-Call Analysis: `strace`
+
+---
+
+## Project Status
+
+**Implementation complete and final regression testing successful.**
+
+The project provides a functional Linux backup and synchronization application while demonstrating practical Operating Systems concepts across **CO1 through CO6**.
+```
+
+After pasting into Nano:
+
+```text
+Ctrl + O
+Enter
+Ctrl + X
+```
+
+Then run:
+
+```bash
+git status --short README.md
+git diff --check
+```
+
+You should see:
+
+```text
+ M README.md
+```
+
+and `git diff --check` should produce no output.
